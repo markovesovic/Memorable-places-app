@@ -1,14 +1,14 @@
 package rs.raf.projekat2.marko_vesovic_rn2417.presentation.view.fragment
 
 import android.content.SharedPreferences
-import android.location.*
-import androidx.fragment.app.Fragment
-
+import android.location.Address
+import android.location.Geocoder
+import android.location.LocationManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-
+import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -18,13 +18,21 @@ import com.google.android.gms.maps.model.MarkerOptions
 import org.koin.android.ext.android.inject
 import rs.raf.projekat2.marko_vesovic_rn2417.R
 
-class MapsFragment : Fragment() {
+class EditLocationMapsFragment: Fragment() {
 
     private lateinit var locationManager: LocationManager
     private val sharedPreferences: SharedPreferences by inject<SharedPreferences>()
-    lateinit var latLng: LatLng
 
     private val onMapReadyCallback = OnMapReadyCallback { googleMap ->
+        /**
+         * Manipulates the map once available.
+         * This callback is triggered when the map is ready to be used.
+         * This is where we can add markers or lines, add listeners or move the camera.
+         * In this case, we just add a marker near Sydney, Australia.
+         * If Google Play services is not installed on the device, the user will be prompted to
+         * install it inside the SupportMapFragment. This method will only be triggered once the
+         * user has installed Google Play services and returned to the app.
+         */
         /**
          * Manipulates the map once available.
          * This callback is triggered when the map is ready to be used.
@@ -42,7 +50,6 @@ class MapsFragment : Fragment() {
         val lon = sharedPreferences.getFloat("lon", 20.5F)
         val lat = sharedPreferences.getFloat("lat", 40.8F)
         val currentLocation = LatLng(lat.toDouble(), lon.toDouble())
-        latLng = currentLocation
 
         placeMarkerOnMap(lat, lon, googleMap)
 //        googleMap.addMarker(MarkerOptions().position(currentLocation).title("Current location"))
@@ -94,5 +101,4 @@ class MapsFragment : Fragment() {
 //        Timber.e("Ovo je iz getAddress2 $address")
         return addresses[0].getAddressLine(0)
     }
-
 }
