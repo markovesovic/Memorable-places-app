@@ -9,8 +9,8 @@ import rs.raf.projekat2.marko_vesovic_rn2417.data.model.MemorablePlaceEntity
 class MemorablePlaceRepositoryImplementation(
     private val localDataSource: MemorablePlaceDao): MemorablePlaceRepository {
 
-    override fun getAll(): Observable<List<MemorablePlace>> {
-        return localDataSource.getAll()
+    override fun getAllAscending(): Observable<List<MemorablePlace>> {
+        return localDataSource.getAllAscending()
             .map {
                 it.map {
                     MemorablePlace(
@@ -24,6 +24,21 @@ class MemorablePlaceRepositoryImplementation(
             }
     }
 
+    override fun getAllDescending(): Observable<List<MemorablePlace>> {
+        return localDataSource.getAllDescending()
+                .map {
+                    it.map {
+                        MemorablePlace(
+                            it.id,
+                            it.title,
+                            it.content,
+                            it.location,
+                            it.dateAdded
+                        )
+                    }
+                }
+        }
+
     override fun insert(memorablePlace: MemorablePlace): Completable {
         val entity = MemorablePlaceEntity(
             memorablePlace.id,
@@ -35,4 +50,32 @@ class MemorablePlaceRepositoryImplementation(
         return localDataSource.insert(entity)
     }
 
+    override fun getAllByFilterAscending(filter: String): Observable<List<MemorablePlace>> {
+        return localDataSource.getByFilterAscending(filter)
+            .map {
+                it.map {
+                    MemorablePlace(
+                        it.id,
+                        it.title,
+                        it.content,
+                        it.location,
+                        it.dateAdded
+                    )
+                }
+            }
+    }
+    override fun getAllByFilterDescending(filter: String): Observable<List<MemorablePlace>> {
+        return localDataSource.getByFilterDescending(filter)
+                .map {
+                    it.map {
+                        MemorablePlace(
+                            it.id,
+                            it.title,
+                            it.content,
+                            it.location,
+                            it.dateAdded
+                        )
+                    }
+                }
+        }
 }

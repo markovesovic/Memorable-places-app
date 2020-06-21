@@ -8,7 +8,10 @@ interface MemorablePlaceContract {
 
     interface ViewModel {
         val memorablePlaceState: LiveData<MemorablePlaceState>
-        fun getAllMemorablePlaces()
+        fun getAllMemorablePlacesAscending()
+        fun getAllMemorablePlacesDescending()
         fun insertMemorablePlace(memorablePlace: MemorablePlace)
+        fun getAllMemorablePlacesByFilterAscending(filter: String)
+        fun getAllMemorablePlacesByFilterDescending(filter: String)
     }
 }

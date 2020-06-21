@@ -5,8 +5,9 @@ import io.reactivex.Observable
 import rs.raf.projekat2.marko_vesovic_rn2417.data.model.MemorablePlace
 
 interface MemorablePlaceRepository {
-
-    fun getAll(): Observable<List<MemorablePlace>>
+    fun getAllAscending(): Observable<List<MemorablePlace>>
+    fun getAllDescending(): Observable<List<MemorablePlace>>
     fun insert(memorablePlace: MemorablePlace): Completable
-
+    fun getAllByFilterAscending(filter: String): Observable<List<MemorablePlace>>
+    fun getAllByFilterDescending(filter: String): Observable<List<MemorablePlace>>
 }

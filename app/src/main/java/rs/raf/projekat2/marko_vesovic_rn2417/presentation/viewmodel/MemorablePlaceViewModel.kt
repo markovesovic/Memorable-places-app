@@ -5,10 +5,13 @@ import androidx.lifecycle.ViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import rs.raf.projekat2.marko_vesovic_rn2417.data.model.MemorablePlace
 import rs.raf.projekat2.marko_vesovic_rn2417.data.repository.MemorablePlaceRepository
 import rs.raf.projekat2.marko_vesovic_rn2417.presentation.contract.MemorablePlaceContract
 import rs.raf.projekat2.marko_vesovic_rn2417.presentation.view.state.MemorablePlaceState
+import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 class MemorablePlaceViewModel(
     private val repository: MemorablePlaceRepository
@@ -18,9 +21,72 @@ class MemorablePlaceViewModel(
 
     private val subscriptions = CompositeDisposable()
 
-    override fun getAllMemorablePlaces() {
+    private val publishSubjectFilterAsc: PublishSubject<String> = PublishSubject.create()
+    private val publishSubjectFilterDesc: PublishSubject<String> = PublishSubject.create()
+
+    init {
+        val subscriptionAsc = publishSubjectFilterAsc
+            .debounce(200, TimeUnit.MILLISECONDS)
+            .distinctUntilChanged()
+            .switchMap {
+                repository
+                    .getAllByFilterAscending(it)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnError {
+                        Timber.e("Error in publish subject")
+                    }
+            }
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+                },
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from db")
+                }
+            )
+        val subscriptionDesc = publishSubjectFilterDesc
+            .debounce(200, TimeUnit.MILLISECONDS)
+            .distinctUntilChanged()
+            .switchMap {
+                repository
+                    .getAllByFilterDescending(it)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnError {
+                        Timber.e("Error in publish subject")
+                    }
+            }
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+                },
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from db")
+                }
+            )
+        subscriptions.add(subscriptionAsc)
+        subscriptions.add(subscriptionDesc)
+    }
+
+    override fun getAllMemorablePlacesAscending() {
         val subscription = repository
-            .getAll()
+            .getAllAscending()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+                },
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from database")
+                }
+            )
+        subscriptions.add(subscription)
+    }
+    override fun getAllMemorablePlacesDescending() {
+        val subscription = repository
+            .getAllAscending()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -48,6 +114,14 @@ class MemorablePlaceViewModel(
                 }
             )
         subscriptions.add(subscription)
+    }
+
+    override fun getAllMemorablePlacesByFilterAscending(filter: String) {
+        publishSubjectFilterAsc.onNext(filter)
+    }
+
+    override fun getAllMemorablePlacesByFilterDescending(filter: String) {
+        publishSubjectFilterDesc.onNext(filter)
     }
 
     override fun onCleared() {

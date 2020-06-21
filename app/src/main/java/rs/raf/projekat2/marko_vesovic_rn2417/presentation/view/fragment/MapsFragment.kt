@@ -1,5 +1,6 @@
 package rs.raf.projekat2.marko_vesovic_rn2417.presentation.view.fragment
 
+import android.animation.ValueAnimator
 import android.content.SharedPreferences
 import android.location.*
 import androidx.fragment.app.Fragment
@@ -14,6 +15,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import org.koin.android.ext.android.inject
 import rs.raf.projekat2.marko_vesovic_rn2417.R
@@ -37,17 +39,14 @@ class MapsFragment : Fragment() {
         googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.setOnMarkerClickListener(onMarkerClickListener)
 
-
-
         val lon = sharedPreferences.getFloat("lon", 20.5F)
         val lat = sharedPreferences.getFloat("lat", 40.8F)
         val currentLocation = LatLng(lat.toDouble(), lon.toDouble())
         latLng = currentLocation
-
         placeMarkerOnMap(lat, lon, googleMap)
-//        googleMap.addMarker(MarkerOptions().position(currentLocation).title("Current location"))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 12.0f))
 
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 12.0f))
+        onMapLongClick(googleMap)
     }
 
     private val onMarkerClickListener = GoogleMap.OnMarkerClickListener {
@@ -68,31 +67,31 @@ class MapsFragment : Fragment() {
         mapFragment?.getMapAsync(onMapReadyCallback)
     }
 
-    private fun placeMarkerOnMap(lat: Float, lon: Float, map: GoogleMap) {
-        val location = LatLng(lat.toDouble(), lon.toDouble())
-        val markerOptions = MarkerOptions().position(location)
-
-        val titleStr = getAddress(location)
-        markerOptions.title(titleStr)
-
-        map.addMarker(markerOptions)
+    private fun placeMarkerOnMap(latLng: LatLng, map: GoogleMap) {
+        placeMarkerOnMap(latLng.latitude.toFloat(), latLng.longitude.toFloat(), map)
     }
 
+    private fun placeMarkerOnMap(lat: Float, lon: Float, map: GoogleMap) {
+        val location = LatLng(lat.toDouble(), lon.toDouble())
+        val marker = MarkerOptions()
+            .position(location)
+            .title(getAddress(location))
+            .snippet("Lat: $lat, Lon: $lon")
+        map.addMarker(marker)
+    }
+
+    private fun onMapLongClick(map: GoogleMap) {
+        map.setOnMapLongClickListener {
+            map.clear()
+            placeMarkerOnMap(it, map)
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(it, map.cameraPosition.zoom))
+        }
+
+    }
+
+
     private fun getAddress(latLng: LatLng): String {
-        val geoCoder = Geocoder(this.activity)
-        val addresses: List<Address>?
-
-        addresses = geoCoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-
-//        if (null != addresses && addresses.isNotEmpty()) {
-//            address = addresses[0]
-//            for (i in 0 until address.maxAddressLineIndex) {
-//                addressText += if (i == 0) address.getAddressLine(i) else "\n" + address.getAddressLine(i)
-//            }
-//        }
-//        Timber.e("Ovo je iz getAddress $addressText")
-//        Timber.e("Ovo je iz getAddress2 $address")
-        return addresses[0].getAddressLine(0)
+        return Geocoder(this.activity).getFromLocation(latLng.latitude, latLng.longitude, 1)[0].getAddressLine(0)
     }
 
 }
