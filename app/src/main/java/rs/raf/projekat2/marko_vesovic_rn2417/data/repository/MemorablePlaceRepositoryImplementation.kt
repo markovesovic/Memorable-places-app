@@ -50,6 +50,15 @@ class MemorablePlaceRepositoryImplementation(
         return localDataSource.insert(entity)
     }
 
+    override fun update(memorablePlace: MemorablePlace): Completable {
+        return localDataSource.update(
+            memorablePlace.id,
+            memorablePlace.title,
+            memorablePlace.content,
+            memorablePlace.location
+        )
+    }
+
     override fun getAllByFilterAscending(filter: String): Observable<List<MemorablePlace>> {
         return localDataSource.getByFilterAscending(filter)
             .map {
@@ -78,4 +87,12 @@ class MemorablePlaceRepositoryImplementation(
                     }
                 }
         }
+
+    override fun delete(memorablePlace: MemorablePlace): Completable {
+        return localDataSource.delete(memorablePlace.id)
+    }
+
+    override fun deleteAll(): Completable {
+        return localDataSource.deleteAll()
+    }
 }

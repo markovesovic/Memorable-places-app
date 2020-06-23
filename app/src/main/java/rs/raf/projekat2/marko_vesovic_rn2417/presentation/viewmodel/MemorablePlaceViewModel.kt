@@ -23,10 +23,12 @@ class MemorablePlaceViewModel(
 
     private val publishSubjectFilterAsc: PublishSubject<String> = PublishSubject.create()
     private val publishSubjectFilterDesc: PublishSubject<String> = PublishSubject.create()
+    private val publishSubjectAsc: PublishSubject<String> = PublishSubject.create()
+    private val publishSubjectDesc: PublishSubject<String> = PublishSubject.create()
 
     init {
-        val subscriptionAsc = publishSubjectFilterAsc
-            .debounce(200, TimeUnit.MILLISECONDS)
+        val subscriptionFilterAsc = publishSubjectFilterAsc
+            .debounce(100, TimeUnit.MILLISECONDS)
             .distinctUntilChanged()
             .switchMap {
                 repository
@@ -45,8 +47,8 @@ class MemorablePlaceViewModel(
                     memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from db")
                 }
             )
-        val subscriptionDesc = publishSubjectFilterDesc
-            .debounce(200, TimeUnit.MILLISECONDS)
+        val subscriptionFilterDesc = publishSubjectFilterDesc
+            .debounce(100, TimeUnit.MILLISECONDS)
             .distinctUntilChanged()
             .switchMap {
                 repository
@@ -65,39 +67,84 @@ class MemorablePlaceViewModel(
                     memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from db")
                 }
             )
+        val subscriptionAsc = publishSubjectAsc
+            .debounce(100, TimeUnit.MILLISECONDS)
+            .distinctUntilChanged()
+            .switchMap {
+                repository
+                    .getAllAscending()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnError {
+                        Timber.e("Error in publish subject")
+                    }
+            }
+            .subscribe (
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+                },
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from db")
+                }
+            )
+        val subscriptionDesc = publishSubjectDesc
+            .debounce(100, TimeUnit.MILLISECONDS)
+            .distinctUntilChanged()
+            .switchMap {
+                repository
+                    .getAllDescending()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnError {
+                        Timber.e("Error in publish subject")
+                    }
+            }
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+                },
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from db")
+                }
+            )
+        subscriptions.add(subscriptionFilterAsc)
+        subscriptions.add(subscriptionFilterDesc)
         subscriptions.add(subscriptionAsc)
         subscriptions.add(subscriptionDesc)
     }
 
-    override fun getAllMemorablePlacesAscending() {
-        val subscription = repository
-            .getAllAscending()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                {
-                    memorablePlaceState.value = MemorablePlaceState.Success(it)
-                },
-                {
-                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from database")
-                }
-            )
-        subscriptions.add(subscription)
+    override fun getAllMemorablePlacesAscending(s: String) {
+        publishSubjectAsc.onNext(s)
+
+//        val subscription = repository
+//            .getAllAscending()
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribe(
+//                {
+//                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+//                },
+//                {
+//                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from database")
+//                }
+//            )
+//        subscriptions.add(subscription)
     }
-    override fun getAllMemorablePlacesDescending() {
-        val subscription = repository
-            .getAllAscending()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                {
-                    memorablePlaceState.value = MemorablePlaceState.Success(it)
-                },
-                {
-                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from database")
-                }
-            )
-        subscriptions.add(subscription)
+    override fun getAllMemorablePlacesDescending(s: String) {
+        publishSubjectDesc.onNext(s)
+//        val subscription = repository
+//            .getAllAscending()
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribe(
+//                {
+//                    memorablePlaceState.value = MemorablePlaceState.Success(it)
+//                },
+//                {
+//                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while getting data from database")
+//                }
+//            )
+//        subscriptions.add(subscription)
     }
 
     override fun insertMemorablePlace(memorablePlace: MemorablePlace) {
@@ -116,12 +163,60 @@ class MemorablePlaceViewModel(
         subscriptions.add(subscription)
     }
 
+    override fun updateMemorablePlace(memorablePlace: MemorablePlace) {
+        val subscription = repository
+            .update(memorablePlace)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.SuccessMessage("Successfully updated location")
+                },
+                {
+                    memorablePlaceState.value = MemorablePlaceState.Error("Error happened while updating location")
+                }
+            )
+        subscriptions.add(subscription)
+    }
+
     override fun getAllMemorablePlacesByFilterAscending(filter: String) {
         publishSubjectFilterAsc.onNext(filter)
     }
 
     override fun getAllMemorablePlacesByFilterDescending(filter: String) {
         publishSubjectFilterDesc.onNext(filter)
+    }
+
+    override fun deleteMemorablePlace(memorablePlace: MemorablePlace) {
+        val subscription = repository
+            .delete(memorablePlace)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.SuccessMessage("Successfully deleted location")
+                },
+                {
+
+                }
+            )
+        subscriptions.add(subscription)
+    }
+
+    override fun deleteAll() {
+        val subscription = repository
+            .deleteAll()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    memorablePlaceState.value = MemorablePlaceState.SuccessMessage("Successfully deleted all locations")
+                },
+                {
+
+                }
+            )
+        subscriptions.add(subscription)
     }
 
     override fun onCleared() {

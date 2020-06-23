@@ -28,8 +28,8 @@ class SecondFragmentPagerAdapter(fragmentManager: FragmentManager): FragmentPage
 
     override fun getPageTitle(position: Int): CharSequence? {
         return when(position) {
-            LEFT_FRAGMENT -> "Levi fragment"
-            else -> "Desni fragment"
+            LEFT_FRAGMENT -> "Mapa sacuvanih lokacija"
+            else -> "Lista sacuvanih lokacija"
         }
     }
 

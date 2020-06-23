@@ -8,12 +8,18 @@ import rs.raf.projekat2.marko_vesovic_rn2417.presentation.view.fragment.MapsFrag
 
 class EditLocationPagerAdapter(fragmentManager: FragmentManager): FragmentPagerAdapter(fragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
+    private lateinit var currentFragment: Fragment
+
     override fun getItem(position: Int): Fragment {
-        return EditLocationMapsFragment()
+        currentFragment = EditLocationMapsFragment()
+        return currentFragment
     }
 
     override fun getCount(): Int {
         return 1
     }
 
+    fun getCurrentFragment(): Fragment {
+        return currentFragment
+    }
 }
